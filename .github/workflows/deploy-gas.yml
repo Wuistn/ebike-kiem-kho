@@ -71,5 +71,7 @@ jobs:
 
       - name: 4. Đẩy code sang Google Apps Script
         run: |
-          echo '${{ secrets.CLASPRC_JSON }}' > ~/.clasprc.json
+          cat << 'EOF' > ~/.clasprc.json
+          ${{ secrets.CLASPRC_JSON }}
+          EOF
           clasp push -f
