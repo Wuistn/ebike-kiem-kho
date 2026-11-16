@@ -71,7 +71,7 @@ jobs:
 
           echo "{\"scriptId\":\"${{ secrets.SCRIPT_ID }}\",\"rootDir\":\"gas_dist\"}" > .clasp.json
 
-      - name: 4. Đẩy code sang Google Apps Script
+      - name: 4. Đẩy code cập nhật lên Google Apps Script (Giữ nguyên URL Web App)
         run: |
           cat << 'EOF' > ~/.clasprc.json
           ${{ secrets.CLASPRC_JSON }}
