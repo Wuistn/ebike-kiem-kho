@@ -25,7 +25,6 @@ jobs:
             npm install --legacy-peer-deps
             npm install -D vite-plugin-singlefile --legacy-peer-deps
             
-            # Tạo cấu hình build gộp toàn bộ JS/CSS vào 1 file index.html cho GAS
             cat << 'EOF' > vite.gas.config.mjs
           import { defineConfig } from 'vite';
           import react from '@vitejs/plugin-react';
@@ -33,17 +32,19 @@ jobs:
 
           export default defineConfig({
             plugins: [react(), viteSingleFile()],
-            build: { outDir: 'dist' }
+            build: { outDir: 'dist', cssCodeSplit: false }
           });
           EOF
 
             npx vite build --config vite.gas.config.mjs
+            
+            # Đảm bảo Tailwind CSS luôn được nạp đầy đủ trong môi trường iframe của GAS
+            sed -i 's|<head>|<head><script src="https://cdn.tailwindcss.com"></script>|g' dist/index.html
             cp dist/index.html gas_dist/index.html
           else
             cp *.html gas_dist/ 2>/dev/null || true
           fi
 
-          # Tạo file appsscript.json chuẩn cho Web App
           cat << 'EOF' > gas_dist/appsscript.json
           {
             "timeZone": "Asia/Ho_Chi_Minh",
@@ -57,7 +58,6 @@ jobs:
           }
           EOF
 
-          # Tạo file Code.gs mặc định để mở giao diện Web App
           cat << 'EOF' > gas_dist/Code.gs
           function doGet(e) {
             return HtmlService.createHtmlOutputFromFile('index')
