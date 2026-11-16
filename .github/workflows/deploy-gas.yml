@@ -1,0 +1,46 @@
+name: Auto Deploy to Google Apps Script
+
+on:
+  push:
+    branches:
+      - main
+
+jobs:
+  build-and-deploy:
+    runs-on: ubuntu-latest
+    steps:
+      - name: 1. Tải mã nguồn từ GitHub
+        uses: actions/checkout@v4
+
+      - name: 2. Cài đặt Node.js và Clasp
+        uses: actions/setup-node@v4
+        with:
+          node-version: '20'
+      - run: npm install -g @google/clasp
+
+      - name: 3. Đóng gói giao diện cho Apps Script
+        run: |
+          mkdir -p gas_dist
+          if [ -f "package.json" ]; then
+            npm install
+            npm run build
+            cp -r dist/* gas_dist/ 2>/dev/null || true
+          else
+            cp *.html gas_dist/ 2>/dev/null || true
+          fi
+
+          cat << 'EOF' > gas_dist/Code.gs
+          function doGet(e) {
+            return HtmlService.createHtmlOutputFromFile('index')
+              .setTitle('Hệ thống Định vị Hàng hóa & Kiểm kho KiotViet')
+              .setXFrameOptionsMode(HtmlService.XFrameOptionsMode.ALLOWALL)
+              .addMetaTag('viewport', 'width=device-width, initial-scale=1');
+          }
+          EOF
+
+          echo "{\"scriptId\":\"${{ secrets.SCRIPT_ID }}\",\"rootDir\":\"gas_dist\"}" > .clasp.json
+
+      - name: 4. Đẩy code sang Google Apps Script
+        run: |
+          echo '${{ secrets.CLASPRC_JSON }}' > ~/.clasprc.json
+          clasp push -f
