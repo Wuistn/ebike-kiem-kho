@@ -18,17 +18,46 @@ jobs:
           node-version: '20'
       - run: npm install -g @google/clasp
 
-      - name: 3. Đóng gói giao diện cho Apps Script
+      - name: 3. Đóng gói giao diện một file duy nhất cho Apps Script
         run: |
           mkdir -p gas_dist
           if [ -f "package.json" ]; then
-            npm install
-            npm run build
-            cp -r dist/* gas_dist/ 2>/dev/null || true
+            npm install --legacy-peer-deps
+            npm install -D vite-plugin-singlefile --legacy-peer-deps
+            
+            # Tạo cấu hình build gộp toàn bộ JS/CSS vào 1 file index.html cho GAS
+            cat << 'EOF' > vite.gas.config.mjs
+          import { defineConfig } from 'vite';
+          import react from '@vitejs/plugin-react';
+          import { viteSingleFile } from 'vite-plugin-singlefile';
+
+          export default defineConfig({
+            plugins: [react(), viteSingleFile()],
+            build: { outDir: 'dist' }
+          });
+          EOF
+
+            npx vite build --config vite.gas.config.mjs
+            cp dist/index.html gas_dist/index.html
           else
             cp *.html gas_dist/ 2>/dev/null || true
           fi
 
+          # Tạo file appsscript.json chuẩn cho Web App
+          cat << 'EOF' > gas_dist/appsscript.json
+          {
+            "timeZone": "Asia/Ho_Chi_Minh",
+            "dependencies": {},
+            "exceptionLogging": "STACKDRIVER",
+            "runtimeVersion": "V8",
+            "webapp": {
+              "executeAs": "USER_DEPLOYING",
+              "access": "ANYONE_ANONYMOUS"
+            }
+          }
+          EOF
+
+          # Tạo file Code.gs mặc định để mở giao diện Web App
           cat << 'EOF' > gas_dist/Code.gs
           function doGet(e) {
             return HtmlService.createHtmlOutputFromFile('index')
