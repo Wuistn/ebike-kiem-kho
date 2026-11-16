@@ -4,9 +4,9 @@
  */
 
 function doGet(e) {
-  const action = e.parameter.action || 'getData';
+  const action = (e && e.parameter && e.parameter.action) || '';
   
-  if (action === 'getData' || action === 'init') {
+  if (action === 'getData' || action === 'init' || action === 'sync') {
     return ContentService.createTextOutput(JSON.stringify({
       status: 'success',
       data: getAllSheetData()

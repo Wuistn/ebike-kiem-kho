@@ -60,14 +60,7 @@ jobs:
           }
           EOF
 
-          cat << 'EOF' > gas_dist/Code.gs
-          function doGet(e) {
-            return HtmlService.createHtmlOutputFromFile('index')
-              .setTitle('Hệ thống Định vị Hàng hóa & Kiểm kho KiotViet')
-              .setXFrameOptionsMode(HtmlService.XFrameOptionsMode.ALLOWALL)
-              .addMetaTag('viewport', 'width=device-width, initial-scale=1');
-          }
-          EOF
+          cp gas-backend/Code.gs gas_dist/Code.gs
 
           echo "{\"scriptId\":\"${{ secrets.SCRIPT_ID }}\",\"rootDir\":\"gas_dist\"}" > .clasp.json
 
