@@ -23,22 +23,24 @@ jobs:
           mkdir -p gas_dist
           if [ -f "package.json" ]; then
             npm install --legacy-peer-deps
-            npm install -D vite-plugin-singlefile --legacy-peer-deps
+            # Bổ sung @tailwindcss/vite và tailwindcss vào danh sách cài đặt devDependencies
+            npm install -D vite-plugin-singlefile @tailwindcss/vite tailwindcss --legacy-peer-deps
             
             cat << 'EOF' > vite.gas.config.mjs
           import { defineConfig } from 'vite';
           import react from '@vitejs/plugin-react';
+          import tailwindcss from '@tailwindcss/vite';
           import { viteSingleFile } from 'vite-plugin-singlefile';
 
           export default defineConfig({
-            plugins: [react(), viteSingleFile()],
+            plugins: [react(), tailwindcss(), viteSingleFile()],
             build: { outDir: 'dist', cssCodeSplit: false }
           });
           EOF
 
             npx vite build --config vite.gas.config.mjs
             
-            # Đảm bảo Tailwind CSS luôn được nạp đầy đủ trong môi trường iframe của GAS
+            # Đảm bảo Tailwind Play CDN luôn được nạp dự phòng để hiển thị chuẩn xác trong iframe của Google Apps Script
             sed -i 's|<head>|<head><script src="https://cdn.tailwindcss.com"></script>|g' dist/index.html
             cp dist/index.html gas_dist/index.html
           else
