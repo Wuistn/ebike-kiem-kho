@@ -2019,11 +2019,85 @@ function SettingsView({
   onSyncKiotViet: () => void,
   syncLogs: SyncLog[]
 }) {
+  const [gasUrl, setGasUrl] = useState(() => localStorage.getItem('kv_gas_url') || '');
+  const [testStatus, setTestStatus] = useState<string | null>(null);
+
+  const handleSaveGasUrl = (e: React.FormEvent) => {
+    e.preventDefault();
+    localStorage.setItem('kv_gas_url', gasUrl.trim());
+    setTestStatus('Đã lưu URL Google Sheets Apps Script thành công!');
+  };
+
+  const handleTestConnection = async () => {
+    if (!gasUrl.trim()) {
+      setTestStatus('Vui lòng nhập URL Web App trước khi kiểm tra!');
+      return;
+    }
+    setTestStatus('Đang kết nối tới Google Sheets...');
+    try {
+      const res = await fetch(gasUrl.trim() + '?action=getData', { method: 'GET' });
+      const json = await res.json();
+      if (json.status === 'success') {
+        setTestStatus('✅ Kết nối Google Sheets thành công! Dữ liệu đã sẵn sàng.');
+      } else {
+        setTestStatus('❌ Phản hồi không hợp lệ từ Apps Script.');
+      }
+    } catch (err) {
+      setTestStatus('❌ Lỗi kết nối (Cần đảm bảo URL đúng và quyền truy cập là Anyone).');
+    }
+  };
+
   return (
     <div className="space-y-4">
       <div>
         <h2 className="text-lg font-bold text-slate-800">Quản trị Hệ thống</h2>
-        <p className="text-xs text-slate-500">Phân quyền, đồng bộ và tài nguyên</p>
+        <p className="text-xs text-slate-500">Phân quyền, đồng bộ và kết nối Google Sheets</p>
+      </div>
+
+      <div className="bg-white p-4 rounded-2xl border border-slate-200 shadow-sm space-y-3">
+        <h3 className="text-xs font-bold text-slate-600 uppercase">Kết nối Google Sheets (Backend)</h3>
+        <p className="text-xs text-slate-500">Nhập URL Web App của Google Apps Script từ Google Sheets của bạn để tự động lưu trữ dữ liệu trực lên Sheet.</p>
+        
+        <form onSubmit={handleSaveGasUrl} className="space-y-3">
+          <div>
+            <label className="block text-[10px] font-medium text-slate-500 mb-1">Google Apps Script Web App URL</label>
+            <input 
+              type="url" 
+              value={gasUrl}
+              onChange={(e) => setGasUrl(e.target.value)}
+              placeholder="https://script.google.com/macros/s/.../exec"
+              className="w-full bg-slate-50 border border-slate-200 rounded-xl px-3 py-2 text-xs focus:outline-none focus:border-indigo-500 font-mono"
+            />
+          </div>
+
+          <div className="flex space-x-2">
+            <button 
+              type="button"
+              onClick={handleTestConnection}
+              className="flex-1 bg-slate-100 hover:bg-slate-200 text-slate-700 py-2.5 rounded-xl text-xs font-bold transition"
+            >
+              Kiểm tra kết nối
+            </button>
+            <button 
+              type="submit"
+              className="flex-1 bg-indigo-600 hover:bg-indigo-700 text-white py-2.5 rounded-xl text-xs font-bold shadow transition"
+            >
+              Lưu kết nối
+            </button>
+          </div>
+        </form>
+
+        {testStatus && (
+          <div className="text-xs p-2.5 rounded-xl bg-indigo-50 text-indigo-900 border border-indigo-100 font-medium">
+            {testStatus}
+          </div>
+        )}
+
+        <div className="pt-2 border-t border-slate-100">
+          <a href="/gas-backend/Code.gs" target="_blank" className="text-xs text-indigo-600 hover:underline font-bold block">
+            📄 Xem mã nguồn Google Apps Script (`/gas-backend/Code.gs`)
+          </a>
+        </div>
       </div>
 
       <div className="bg-white p-4 rounded-2xl border border-slate-200 shadow-sm space-y-3">
